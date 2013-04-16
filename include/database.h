@@ -4,12 +4,7 @@
 #include <string>
 #include <map>
 
-class Compare {
-   public:
-      bool operator() (std::string * lhs, std::string * rhs) {
-    		return *lhs < *rhs;
-      }
-};
+#include "../include/comparator.h"
 
 class Database {
 public:
@@ -17,9 +12,13 @@ public:
 	~Database();
 	int get_size() const;
 	void get_sequence_by_name(const std::string& name, std::string & out_seq) const;
+	void get_name_by_sequence(const std::string& seq, std::string & out_name) const;
+	void get_comment_by_name(const std::string& name, std::string & out_comment) const;
 	std::map<std::string *, std::string *>::const_iterator get_data_iterator() const;
 private:
-	std::map<std::string *, std::string *, Compare> * data;
+	std::map<std::string *, std::string *, Compare> * name2seq;
+	std::map<std::string *, std::string *, Compare> * name2comment;
+	std::map<std::string *, std::string *, Compare> * seq2name;
 };
 
 

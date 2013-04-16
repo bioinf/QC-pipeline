@@ -4,17 +4,12 @@
 #include <exception>
 #include <string>
 
-class QcException : std::exception {
+class QcException : public std::exception {
 public:
-	QcException(const std::string m) {
-		this->message = m;
-	};
+	QcException(const std::string m);
+	~QcException() throw ();
 
-	~QcException() throw (){};
-
-	const char* what() const throw () {
-		return message.c_str();
-	};
+	const char* what() const throw ();
 
 private:
 	std::string message;

@@ -20,19 +20,18 @@ bool Node::isTerminal() const {
 	return word_index >= 0;
 }
 
-
-void AhoCorasick::addString(const string& str) {
+void AhoCorasick::addString(const string * str) {
 	Node *current_node = &root;
-	for (int i = 0; i < (int) str.length(); ++i) {
-		Node *child_node = current_node->getLink(str[i]);
+	for (int i = 0; i < (int) str->length(); ++i) {
+		Node *child_node = current_node->getLink((*str)[i]);
 		if (!child_node) {
 			child_node = new Node(&root);
-			current_node->links[str[i]] = child_node;
+			current_node->links[(*str)[i]] = child_node;
 		}
 		current_node = child_node;
 	}
 	current_node->word_index = patterns.size();
-	patterns.push_back(str);
+	patterns.push_back(const_cast<std::string *>(str));
 }
 
 //create fail (longest suffix) links in BFS manner
@@ -87,31 +86,47 @@ const Node * AhoCorasick::go(const Node * current_state, char c) {
 	return &root; //(2)
 }
 
+void AhoCorasick::insert_match(std::string * seq, int pos) {
+	std::map<std::string*, std::vector<int>, Compare>::iterator it;
+
+	if (seq2index_match.end() != (it = seq2index_match.find(seq))) {
+		it->second.push_back(pos);
+	} else {
+		std::vector<int> ind;
+		ind.push_back(pos);
+		seq2index_match.insert(make_pair(seq, ind));
+	}
+}
+
 //check if node is terminal and
 //traverse output links to find nay patterns
 //that are recognized at this state too
 void AhoCorasick::isFound(const Node * current_state, int pos) {
+
 	if (current_state->isTerminal()) {
-		std::cout << "Match at position " << pos - patterns[current_state->word_index].length() + 1
-				<< ": " << patterns[current_state->word_index] << std::endl;
+		insert_match(patterns[current_state->word_index], pos - patterns[current_state->word_index]->length() + 1);
 	}
 
 	const Node *terminal_node = current_state->output;
 	//out(u):= out(u) U out(f(u)); => iterate through f(u), f(f(u)), etc
 	//as if some pattern is recognized at f(u), it should be recognized at u too.
 	while (terminal_node) {
-		std::cout << "Match at position " << pos - patterns[terminal_node->word_index].length() + 1
-						<< ": " << patterns[terminal_node->word_index] << std::endl;
+		insert_match(patterns[terminal_node->word_index], pos - patterns[terminal_node->word_index]->length() + 1);
 		terminal_node = terminal_node->output;
 	}
 }
 
-void AhoCorasick::search(const string& str) {
+void AhoCorasick::search(const std::string& str) {
+	seq2index_match.clear();
 	const Node * current_state = &root;
-
+	std::vector<int> res;
 	for (int i = 0; i < (int) str.length(); ++i) {
 		current_state = go(current_state, str[i]);
 		isFound(current_state, i);
 	 }
+}
+
+std::map<std::string*, std::vector<int>, Compare> AhoCorasick::getMatch() const {
+	return seq2index_match;
 }
 

@@ -5,7 +5,7 @@
 FastaReader::FastaReader(const std::string& filename) {
 	fp = gzopen(filename.c_str(), "r");
 	if(Z_NULL == fp) {
-		throw QcException("Database not found at: " + filename);
+		throw QcException("Error opening file at: " + filename);
 	}
 
 	seq = kseq_init(fp);
@@ -16,9 +16,10 @@ FastaReader::~FastaReader() {
 	gzclose(fp);
 }
 
-void FastaReader::read_line(std::string& line) {
+void FastaReader::read_line(std::string& name, std::string& sequence) {
 	if (kseq_read(seq) < 0) {
 		throw QcException("End of file reached");
 	}
-	line.assign(seq->seq.s);
+	name.assign(seq->name.s);
+	sequence.assign(seq->seq.s);
 }

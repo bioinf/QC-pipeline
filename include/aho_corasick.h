@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "../include/comparator.h"
+
 class Node {
 public:
     Node(Node *fail_node = NULL) : fail(fail_node), output(NULL), word_index(-1) { }
@@ -20,14 +22,17 @@ public:
 
 class AhoCorasick {
 public:
-	void addString(const std::string& str);
+	void addString(const std::string * str);
 	void init();
+	void search(const std::string& str);
+	std::map<std::string*, std::vector<int>, Compare> getMatch() const;
+private:
 	const Node * go(const Node * current_state, char c);
 	void isFound(const Node * current_state, int pos);
-	void search(const std::string& str);
-private:
 	Node root;
-	std::vector<std::string> patterns;
+	std::vector<std::string *> patterns;
+	std::map<std::string*, std::vector<int>, Compare> seq2index_match;
+	void insert_match(std::string * seq, int pos);
 };
 
 #endif /* AHO_CORASICK_H_ */
