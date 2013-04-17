@@ -9,7 +9,8 @@ CPP_SRCS += \
 ../src/database.cpp \
 ../src/fasta_reader.cpp \
 ../src/main.cpp \
-../src/output.cpp 
+../src/output.cpp \
+../src/utils.cpp 
 
 OBJS += \
 ./src/QcException.o \
@@ -17,7 +18,8 @@ OBJS += \
 ./src/database.o \
 ./src/fasta_reader.o \
 ./src/main.o \
-./src/output.o 
+./src/output.o \
+./src/utils.o 
 
 CPP_DEPS += \
 ./src/QcException.d \
@@ -25,7 +27,8 @@ CPP_DEPS += \
 ./src/database.d \
 ./src/fasta_reader.d \
 ./src/main.d \
-./src/output.d 
+./src/output.d \
+./src/utils.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

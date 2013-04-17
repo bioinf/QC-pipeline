@@ -4,6 +4,7 @@
 #include <exception>
 #include "../include/database.h"
 #include "../include/QcException.h"
+#include "../include/utils.h"
 extern"C"{
 	#include "../include/kseq.h"
 }
@@ -33,6 +34,14 @@ Database::Database(const std::string& filename) {
 		name2seq->insert(std::make_pair(name, sequence));
 		seq2name->insert(std::make_pair(sequence, name));
 		name2comment->insert(std::make_pair(name, comment));
+
+		//complement strings:
+		std::string * name_c = new std::string(std::string(seq->name.s) + " (complementary)");
+		std::string * sequence_c = new std::string(reverseComplement(seq->seq.s));
+		std::string * comment_c = new std::string(std::string(seq->comment.s) + " (complementary)");
+		name2seq->insert(std::make_pair(name_c, sequence_c));
+		seq2name->insert(std::make_pair(sequence_c, name_c));
+		name2comment->insert(std::make_pair(name_c, comment_c));
 	}
 	kseq_destroy(seq);
 	gzclose(fp);
