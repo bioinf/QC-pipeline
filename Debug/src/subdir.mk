@@ -8,6 +8,7 @@ CPP_SRCS += \
 ../src/aho_corasick.cpp \
 ../src/database.cpp \
 ../src/fasta_reader.cpp \
+../src/local_alignment.cpp \
 ../src/main.cpp \
 ../src/output.cpp \
 ../src/utils.cpp 
@@ -17,6 +18,7 @@ OBJS += \
 ./src/aho_corasick.o \
 ./src/database.o \
 ./src/fasta_reader.o \
+./src/local_alignment.o \
 ./src/main.o \
 ./src/output.o \
 ./src/utils.o 
@@ -26,6 +28,7 @@ CPP_DEPS += \
 ./src/aho_corasick.d \
 ./src/database.d \
 ./src/fasta_reader.d \
+./src/local_alignment.d \
 ./src/main.d \
 ./src/output.d \
 ./src/utils.d 

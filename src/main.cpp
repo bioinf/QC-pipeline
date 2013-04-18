@@ -3,9 +3,12 @@
 #include <exception>
 #include "../include/QcException.h"
 #include "../include/database.h"
+#include "../include/local_alignment.h"
 #include "../include/fasta_reader.h"
 #include "../include/aho_corasick.h"
 #include "../include/output.h"
+
+//#define TEST
 
 void usage() {
 	std::cout << "This tool searches contaminations from UniVec db in provided file with reads" << std::endl;
@@ -13,7 +16,25 @@ void usage() {
 	std::cout << "Currently only .gz files can be read" << std::endl;
 }
 
+void test() {
+	std::cout << "TEST" << std::endl;
+	LocalAlignment la;
+	AligmentPositions pos;
+	std::string text = "PLEASANTLY", pattern = "MEANLY", aligned_text, aligned_pattern;
+//	std::string text = "ACACACTA", pattern = "AGCACACA", aligned_text, aligned_pattern;
+
+	AlignmentData data(text, pattern, aligned_text, aligned_pattern, pos);
+	la.align(data);
+//	print_alignment(data);
+}
+
 int main(int argc, char *argv[]) {
+
+#ifdef TEST
+	test();
+	return 0;
+#endif
+
 	if(3 != argc) {
 		usage();
 		return 0;
@@ -60,16 +81,43 @@ int main(int argc, char *argv[]) {
 
 	std::string name, sequence;
 	int counter = 0;
+//	//Exact match:
+//	try {
+//		while (true) {
+//			input->read_line(name, sequence);
+//			a.search(sequence);
+//			std::map<std::string*, std::vector<int>, Compare> res = a.getMatch();
+//			if (res.size() > 0) {
+//				print_match(res, name, sequence, data);
+//			}
+//			if (!(++counter % 10)) {
+//				std::clog << counter << " reads processed\r";
+//			}
+//		}
+//	} catch (std::exception& e) {
+//		std::clog << e.what() << std::endl;
+//	}
+
 	try {
 		while (true) {
 			input->read_line(name, sequence);
-			a.search(sequence);
-			std::map<std::string*, std::vector<int>, Compare> res = a.getMatch();
-			if (res.size() > 0) {
-				print_match(res, name, sequence, data);
-			}
-			if (!(++counter % 10)) {
-				std::clog << counter << " reads processed\r";
+
+			std::map<std::string *, std::string *>::const_iterator it = data->get_data_iterator();
+			for (int i = 0; i < data->get_size(); ++i) {
+				LocalAlignment la;
+				AligmentPositions pos;
+				std::string aligned_text, aligned_pattern, database_comment;
+
+				AlignmentData dt(sequence, *(it->second), aligned_text, aligned_pattern, pos);
+				la.align(dt);
+
+				std::string& database_name = *(it->first);
+				data->get_comment_by_name(database_name, database_comment);
+				print_alignment(dt, name, database_name, database_comment);
+				it++;
+				if (!(++counter % 10)) {
+					std::clog << counter << " reads processed\r";
+				}
 			}
 		}
 	} catch (std::exception& e) {
