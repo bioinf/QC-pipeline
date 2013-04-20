@@ -10,28 +10,31 @@ void print_n_times(char c, int n) {
 void print_alignment(const AlignmentData & data, std::string& name, std::string& database_name, std::string& database_comment) {
 
 	std::cout << "Alignment: input sequence (first line) " << name << " alignes " << std::endl
-			<< "sequence from database  (2nd line) " << database_name << " - " << database_comment << std::endl;
+			<< "sequence from database  (last line) " << database_name << " - " << database_comment << std::endl;
 
-//	std::cerr << data.pos.text_begin << " " << data.pos.pattern_begin << " " << data.pos.text_end << " " << data.pos.pattern_end << std::endl;
-	std::string text_result = data.text;
-	text_result.replace(data.pos.text_begin, data.pos.text_end - data.pos.text_begin + 1, data.aligned_text);
-	std::string pattern_result = data.pattern;
-	pattern_result.replace(data.pos.pattern_begin, data.pos.pattern_end - data.pos.pattern_begin + 1, data.aligned_pattern);
+	// case when pattern's start pos is less than text one
+	int text_offset = data.pos.text_begin - data.pos.pattern_begin < 0 ? data.pos.pattern_begin - data.pos.text_begin : 0;
 
-	std::cout << text_result << std::endl;
+	// text
+	print_n_times(' ', text_offset);
+	std::cout << data.text << std::endl;
+	print_n_times(' ', text_offset + data.pos.text_begin);
+	std::cout << data.aligned_text << std::endl;
 
-	print_n_times(' ', data.pos.text_begin);
-	for (int i = 0; i < std::min((int)pattern_result.length(), (int)text_result.length()) - data.pos.text_begin; ++i) {
-		if(pattern_result.at(i) != '-' && text_result.at(data.pos.text_begin + i) != '-') {
-			std::cout << "|";
-		} else {
-			std::cout << " ";
-		}
+	// vertical dashes
+	print_n_times(' ', text_offset + data.pos.text_begin);
+	for (int i = 0; i < (int)std::min(data.aligned_pattern.length(), data.aligned_text.length()); ++i) {
+		data.aligned_pattern.at(i) == data.aligned_text.at(i) ? std::cout << "|" : std::cout << " ";
 	}
 	std::cout << std::endl;
 
-	print_n_times(' ', data.pos.text_begin);
-	std::cout << pattern_result << std::endl;
+	// pattern
+	print_n_times(' ', text_offset + data.pos.text_begin);
+	std::cout << data.aligned_pattern << std::endl;
+	print_n_times(' ', data.pos.text_begin - data.pos.pattern_begin);
+	std::cout << data.pattern << std::endl;
+
+	std::cout << std::endl;
 }
 
 void print_match(std::map<std::string*, std::vector<int>, Compare>& res, std::string& name, std::string& seq, const Database * data) {

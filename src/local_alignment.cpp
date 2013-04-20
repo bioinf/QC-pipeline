@@ -83,10 +83,10 @@ void LocalAlignment::destroy(int n, int m) {
 
 void LocalAlignment::build_matrices(const std::string& text, const std::string& pattern) {
 
-//	const int start_gap = -11;
-	const int start_gap = -1; //for http://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm example
-//	const int gap = -1;
-	const int gap = 0; //for http://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm example
+	const int start_gap = -11;
+//	const int start_gap = -1; //for http://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm example
+	const int gap = -1;
+//	const int gap = 0; //for http://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm example
 	const int n = pattern.size() + 1;
 	const int m = text.size() + 1;
 
@@ -94,14 +94,14 @@ void LocalAlignment::build_matrices(const std::string& text, const std::string& 
 
 	for(int i = 1; i < n; ++i) {
 		for(int j = 1; j < m; ++j) {
-//			int subs = pattern[i - 1] == text[j - 1] ? 1 : -1;
+			int subs = pattern[i - 1] == text[j - 1] ? 1 : -1;
 //			int subs;	//LAFF example
 //			if (letter_to_number_.find(pattern[i - 1]) == letter_to_number_.end()
 //					|| letter_to_number_.find(text[j - 1]) == letter_to_number_.end())
 //				subs = INF;
 //			else
 //				subs = blos62[letter_to_number_[pattern[i - 1]]] [letter_to_number_[text[j - 1]]];
-			int subs = pattern[i - 1] == text[j - 1] ? 2 : -1; //for http://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm example
+//			int subs = pattern[i - 1] == text[j - 1] ? 2 : -1; //for http://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm example
 			M[i][j] = std::max(std::max(M[i - 1][j - 1] + subs, Ix[i - 1][j - 1] + subs), std::max(0, Iy[i - 1][j - 1] + subs));
 			if(M[i][j] == 0)
 				traceM[i][j] = std::pair<char, std::pair<int,int> >('S', std::pair<int, int>(i - 1, j - 1));

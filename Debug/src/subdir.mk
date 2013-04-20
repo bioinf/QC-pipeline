@@ -7,6 +7,7 @@ CPP_SRCS += \
 ../src/QcException.cpp \
 ../src/aho_corasick.cpp \
 ../src/database.cpp \
+../src/edit_distance.cpp \
 ../src/fasta_reader.cpp \
 ../src/local_alignment.cpp \
 ../src/main.cpp \
@@ -17,6 +18,7 @@ OBJS += \
 ./src/QcException.o \
 ./src/aho_corasick.o \
 ./src/database.o \
+./src/edit_distance.o \
 ./src/fasta_reader.o \
 ./src/local_alignment.o \
 ./src/main.o \
@@ -27,6 +29,7 @@ CPP_DEPS += \
 ./src/QcException.d \
 ./src/aho_corasick.d \
 ./src/database.d \
+./src/edit_distance.d \
 ./src/fasta_reader.d \
 ./src/local_alignment.d \
 ./src/main.d \
