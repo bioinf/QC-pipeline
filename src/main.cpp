@@ -4,14 +4,31 @@
 #include "../include/QcException.h"
 #include "../include/database.h"
 #include "../include/local_alignment.h"
-#include "../include/fasta_reader.h"
 #include "../include/aho_corasick.h"
 #include "../include/edit_distance.h"
 #include "../include/output.h"
+#include "mph_index/kmer_index.hpp"
+#include "sequence/seq.hpp"
+#include "hammer_kmer_splitter.h"
+#include "io/ireadstream.hpp"
 
 #define EDIT_DISTANCE_THRESHOLD 1
 #define ALIGNED_LENGTH_MAX_DIFF_THRESHOLD 4
 //#define TEST
+
+std::vector<std::string> Globals::input_filenames = std::vector<std::string>();
+std::vector<std::string> Globals::input_filename_bases = std::vector<std::string>();
+std::vector<uint32_t> * Globals::subKMerPositions = NULL;
+KMerData *Globals::kmer_data = NULL;
+int Globals::iteration_no = 0;
+
+char Globals::char_offset = 0;
+bool Globals::char_offset_user = true;
+
+double Globals::quality_probs[256] = { 0 };
+double Globals::quality_lprobs[256] = { 0 };
+double Globals::quality_rprobs[256] = { 0 };
+double Globals::quality_lrprobs[256] = { 0 };
 
 void usage() {
 	std::cout << "This tool searches contaminations from UniVec db in provided file with reads" << std::endl;
@@ -48,7 +65,7 @@ void test() {
 }
 
 
-void exactMatch(FastaReader * input, const Database * data) {
+void exactMatch(ireadstream * input, const Database * data) {
 	std::clog << "Create Aho-Corasick pattern automata ... ";
 
 	std::map<std::string *, std::string *>::const_iterator it = data->get_data_iterator();
@@ -64,8 +81,11 @@ void exactMatch(FastaReader * input, const Database * data) {
 	std::string name, sequence;
 	int counter = 0;
 	try {
-		while (true) {
-			input->read_line(name, sequence);
+		Read r;
+		while (!input->eof()) {
+			*input >> r;
+			name = r.getName();
+			sequence = r.getSequence().str();
 			a.search(sequence);
 			std::map<std::string*, std::vector<int>, Compare> res = a.getMatch();
 			if (res.size() > 0) {
@@ -80,12 +100,15 @@ void exactMatch(FastaReader * input, const Database * data) {
 	}
 }
 
-void alignment(FastaReader * input, const Database * data) {
+void alignment(ireadstream * input, const Database * data) {
 	std::string name, sequence;
 	int counter = 0;
 	try {
-		while (true) {
-			input->read_line(name, sequence);
+		Read r;
+		while (!input->eof()) {
+			*input >> r;
+			name = r.getName();
+			sequence = r.getSequence().str();
 
 			std::map<std::string *, std::string *>::const_iterator it = data->get_data_iterator();
 			for (int i = 0; i < data->get_size(); ++i) {
@@ -119,14 +142,18 @@ int main(int argc, char *argv[]) {
 	return 0;
 #endif
 
-	if(4 != argc || strcmp(argv[1], "exact") && strcmp(argv[1], "align")) {
+
+	if(4 != argc || (strcmp(argv[1], "exact") && strcmp(argv[1], "align"))) {
 		usage();
 		return 0;
 	}
 
 	const std::string mode(argv[1]);
-	const std::string db(argv[2]);
 	const std::string dt(argv[3]);
+	std::string db(argv[2]);
+
+	HammerKMerSplitter splitter(db);
+	KMerDiskCounter<hammer::KMer> counter(dt, splitter);
 
 	clock_t start = clock();
 
@@ -143,9 +170,9 @@ int main(int argc, char *argv[]) {
 
 	std::clog << "Init file with reads-to-clean at " << dt << " ... ";
 	//Init file with reads-to-clean
-	FastaReader * input;
+	ireadstream * input;
 	try {
-		input = new FastaReader(dt);
+		input = new ireadstream(dt);
 	} catch (std::exception& e) {
 		std::cout << e.what() << std::endl;
 		std::cout << "Make sure that you provided correct path to fasta/fastq file in .gz (!)" << std::endl;

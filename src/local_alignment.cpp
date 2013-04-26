@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "../include/local_alignment.h"
 
 #define INF -100000

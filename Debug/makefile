@@ -8,6 +8,9 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include src/SPAdes/mph_index/subdir.mk
+-include src/SPAdes/io/subdir.mk
+-include src/SPAdes/subdir.mk
 -include src/subdir.mk
 -include subdir.mk
 -include objects.mk
@@ -44,7 +47,7 @@ all: QC-pipeline
 QC-pipeline: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MacOS X C++ Linker'
-	g++  -o "QC-pipeline" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L/opt/local/lib/gcc47/ -std=c++11 -o "QC-pipeline" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -8,7 +8,6 @@ CPP_SRCS += \
 ../src/aho_corasick.cpp \
 ../src/database.cpp \
 ../src/edit_distance.cpp \
-../src/fasta_reader.cpp \
 ../src/local_alignment.cpp \
 ../src/main.cpp \
 ../src/output.cpp \
@@ -19,7 +18,6 @@ OBJS += \
 ./src/aho_corasick.o \
 ./src/database.o \
 ./src/edit_distance.o \
-./src/fasta_reader.o \
 ./src/local_alignment.o \
 ./src/main.o \
 ./src/output.o \
@@ -30,7 +28,6 @@ CPP_DEPS += \
 ./src/aho_corasick.d \
 ./src/database.d \
 ./src/edit_distance.d \
-./src/fasta_reader.d \
 ./src/local_alignment.d \
 ./src/main.d \
 ./src/output.d \
@@ -41,7 +38,7 @@ CPP_DEPS += \
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	g++ -I/opt/local/include/gcc47/c++/ -I"/Users/Kos/Dropbox/Bioinf/QC-pipeline/include" -I"/Users/Kos/Dropbox/Bioinf/QC-pipeline/include/SPAdes" -I"/Users/Kos/Dropbox/Bioinf/QC-pipeline/src/SPAdes" -O0 -g3 -Wall -c -fmessage-length=0 -std=c++11 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
