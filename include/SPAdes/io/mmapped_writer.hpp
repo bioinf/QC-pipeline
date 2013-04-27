@@ -33,7 +33,7 @@ class MMappedWriter {
   void open(const std::string &FileName) {
     StreamFile = ::open(FileName.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0660);
     VERIFY_MSG(StreamFile != -1,
-               "open(2) failed. Reason: " << strerror(errno) << ". Error code: " << errno);
+               "open(2) failed for file: " << FileName.c_str() << ". Reason: " << strerror(errno) << ". Error code: " << errno);
     
     FileOffset = BytesWritten = 0;
     MappedRegion = NULL;

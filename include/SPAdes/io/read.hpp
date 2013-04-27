@@ -189,7 +189,7 @@ private:
     }
     for (size_t i = 0; i < seq_.size(); ++i) {
       if (!is_nucl(seq_[i])) {
-	return false;
+    	  return false;
       }
     }
     return true;

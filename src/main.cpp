@@ -11,10 +11,12 @@
 #include "sequence/seq.hpp"
 #include "hammer_kmer_splitter.h"
 #include "io/ireadstream.hpp"
+#include "logger/log_writers.hpp"
+#include "memory_limit.hpp"
 
 #define EDIT_DISTANCE_THRESHOLD 1
 #define ALIGNED_LENGTH_MAX_DIFF_THRESHOLD 4
-//#define TEST
+#define TEST
 
 std::vector<std::string> Globals::input_filenames = std::vector<std::string>();
 std::vector<std::string> Globals::input_filename_bases = std::vector<std::string>();
@@ -37,7 +39,6 @@ void usage() {
 }
 
 int get_alignment_diff(const AlignmentData & data) {
-
 	int aligned_length = 0;
 	for (int i = 0; i < (int)data.aligned_pattern.length(); ++i) {
 		if ('-' != data.aligned_pattern[i]) {
@@ -46,6 +47,86 @@ int get_alignment_diff(const AlignmentData & data) {
 	}
 
 	return abs((int)data.pattern.length() - aligned_length);
+}
+
+void create_console_logger() {
+  using namespace logging;
+
+  logger *lg = create_logger("");
+  lg->add_writer(std::make_shared<console_writer>());
+  attach_logger(lg);
+}
+
+void initSpades() {
+	try{
+		create_console_logger();
+	    std::string config_file = CONFIG_FILENAME;
+	    INFO("Loading config from " << config_file.c_str());
+	    cfg::create_instance(config_file);
+
+	    const size_t GB = 1 << 30;
+	    limit_memory(cfg::get().general_hard_memory_limit * GB);
+
+	    if (cfg::get().input_paired_1 != "" && cfg::get().input_paired_2 != "") {
+			Globals::input_filenames.push_back(cfg::get().input_paired_1);
+			Globals::input_filenames.push_back(cfg::get().input_paired_2);
+	    }
+	    if (cfg::get().input_single != "") Globals::input_filenames.push_back(cfg::get().input_single);
+
+	    VERIFY(Globals::input_filenames.size() > 0);
+
+	    for (size_t iFile=0; iFile < Globals::input_filenames.size(); ++iFile) {
+		  Globals::input_filename_bases.push_back(
+			  path::basename(Globals::input_filenames[iFile]) +
+			  path::extension(Globals::input_filenames[iFile]));
+		  INFO("Input file: " << Globals::input_filename_bases[iFile]);
+		}
+
+		// determine quality offset if not specified
+		if (!cfg::get().input_qvoffset_opt) {
+		  INFO("Trying to determine PHRED offset");
+		  int determined_offset = determine_offset(Globals::input_filenames.front());
+		  if (determined_offset < 0) {
+			ERROR("Failed to determine offset! Specify it manually and restart, please!");
+			return;
+		  } else {
+			INFO("Determined value is " << determined_offset);
+			cfg::get_writable().input_qvoffset = determined_offset;
+		  }
+		  Globals::char_offset_user = false;
+		} else {
+		  cfg::get_writable().input_qvoffset = *cfg::get().input_qvoffset_opt;
+		  Globals::char_offset_user = true;
+		}
+		Globals::char_offset = (char)cfg::get().input_qvoffset;
+
+		// Pre-cache quality probabilities
+		for (unsigned qual = 0; qual < sizeof(Globals::quality_probs) / sizeof(Globals::quality_probs[0]); ++qual) {
+		  Globals::quality_rprobs[qual] = (qual < 3 ? 0.75 : pow(10.0, -(int)qual / 10.0));
+		  Globals::quality_probs[qual] = 1 - Globals::quality_rprobs[qual];
+		  Globals::quality_lprobs[qual] = log(Globals::quality_probs[qual]);
+		  Globals::quality_lrprobs[qual] = log(Globals::quality_rprobs[qual]);
+		}
+
+	    Globals::kmer_data = new KMerData;
+
+	} catch (std::bad_alloc const& e) {
+		std::cerr << "Not enough memory. " << e.what() << std::endl;
+		return;
+	}
+}
+
+void testKmer() {
+	initSpades();
+	KMerDataCounter counter(cfg::get().count_numfiles);
+	counter.FillKMerData(*Globals::kmer_data);
+	std::cout << "total kmers: " << Globals::kmer_data->size() << std::endl;
+
+	std::ofstream output("/tmp/kmers");
+	Globals::kmer_data->binary_write(output);
+	output.close();
+	std::cout << "Saved" << std::endl;
+	delete Globals::kmer_data;
 }
 
 void test() {
@@ -63,7 +144,6 @@ void test() {
 
 	print_alignment(data, test_name, test_name, test_name);
 }
-
 
 void exactMatch(ireadstream * input, const Database * data) {
 	std::clog << "Create Aho-Corasick pattern automata ... ";
@@ -138,10 +218,10 @@ void alignment(ireadstream * input, const Database * data) {
 int main(int argc, char *argv[]) {
 
 #ifdef TEST
-	test();
+//	test();
+	testKmer();
 	return 0;
 #endif
-
 
 	if(4 != argc || (strcmp(argv[1], "exact") && strcmp(argv[1], "align"))) {
 		usage();
@@ -151,9 +231,6 @@ int main(int argc, char *argv[]) {
 	const std::string mode(argv[1]);
 	const std::string dt(argv[3]);
 	std::string db(argv[2]);
-
-	HammerKMerSplitter splitter(db);
-	KMerDiskCounter<hammer::KMer> counter(dt, splitter);
 
 	clock_t start = clock();
 
