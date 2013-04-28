@@ -26,6 +26,7 @@ struct hammer_config
 	int edit_distance_threshold;
 	int aligned_length_max_diff_threshold;
 	string output_file;
+	string output_bed;
   string input_paired_1;
   string input_paired_2;
   string input_single;

@@ -21,6 +21,7 @@ void load(hammer_config& cfg, boost::property_tree::ptree const& pt)
   load(cfg.aligned_length_max_diff_threshold, pt, "aligned_length_max_diff_threshold");
   load(cfg.edit_distance_threshold, pt, "edit_distance_threshold");
   load(cfg.output_file, pt, "output_file");
+  load(cfg.output_bed, pt, "output_bed");
 
   load(cfg.general_do_everything_after_first_iteration, pt, "general_do_everything_after_first_iteration");
   load(cfg.general_reconstruct_only, pt, "general_reconstruct_only");

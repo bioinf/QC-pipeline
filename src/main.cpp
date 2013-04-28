@@ -88,9 +88,10 @@ int main(int argc, char *argv[]) {
 	try {
 		INFO("Reading UniVec db at " << db <<  " ... ");
 		data = new Database(db);
-		INFO("Done.\nInit file with reads-to-clean at " << dt << " ... ");
+		INFO("Done.");
+		INFO("Init file with reads-to-clean at " << dt << " ... ");
 		input = new ireadstream(dt);
-		INFO("DONE");
+		INFO("Done");
 	} catch (std::exception& e) {
 		ERROR(e.what() << "Make sure that you provided correct path to fasta/fastq file in .gz (!)\n");
 		return 0;
@@ -98,18 +99,19 @@ int main(int argc, char *argv[]) {
 
 	INFO("Start matching reads against UniVec ...");
 	std::ofstream output(cfg::get().output_file);
-	if (!output.is_open()) {
-		ERROR("Cannot open output file: " << cfg::get().output_file);
+	std::ofstream bed(cfg::get().output_bed);
+	if (!output.is_open() || !bed.is_open()) {
+		ERROR("Cannot open output file: " << cfg::get().output_file << " or " << cfg::get().output_bed);
 		return 0;
 	}
 
 	if (!strcmp(argv[1], "exact")) {
-		exactMatch(output, input, data);
+		exactMatch(output, bed, input, data);
 	} else {
-		alignment(output, input, data);
+		alignment(output, bed, input, data);
 	}
 	output.close();
-	INFO("Done.");
+	bed.close();
 
 	delete data; //NB Don't delete earlier than AhoCorasick, because otherwise all patterns will be deleted
 	delete input;

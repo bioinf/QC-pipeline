@@ -5,7 +5,7 @@
 #include "database.h"
 #include "io/ireadstream.hpp"
 
-void exactMatch(std::ostream& output, ireadstream * input, const Database * data);
-void alignment(std::ostream& output, ireadstream * input, const Database * data);
+void exactMatch(std::ostream& output, std::ostream& bed, ireadstream * input, const Database * data);
+void alignment(std::ostream& output, std::ostream& bed, ireadstream * input, const Database * data);
 
 #endif /* RUNNING_MODES_H_ */

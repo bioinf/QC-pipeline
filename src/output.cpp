@@ -1,9 +1,10 @@
 #include <iostream>
+#include <algorithm>
 #include "output.h"
 
 void print_n_times(std::ostream& output, char c, int n) {
 	for(int i = 0; i < n; ++i) {
-		std::cout << c;
+		output << c;
 	}
 }
 
@@ -15,7 +16,7 @@ void print_alignment(std::ostream& output, const AlignmentData & data, std::stri
 	// case when pattern's start pos is less than text one
 	int text_offset = data.pos.text_begin - data.pos.pattern_begin < 0 ? data.pos.pattern_begin - data.pos.text_begin : 0;
 
-	// text
+	// text = read
 	print_n_times(output, ' ', text_offset);
 	output << data.text << std::endl;
 	print_n_times(output, ' ', text_offset + data.pos.text_begin);
@@ -28,7 +29,7 @@ void print_alignment(std::ostream& output, const AlignmentData & data, std::stri
 	}
 	output << std::endl;
 
-	// pattern
+	// pattern = contamination
 	print_n_times(output, ' ', text_offset + data.pos.text_begin);
 	output << data.aligned_pattern << std::endl;
 	print_n_times(output, ' ', data.pos.text_begin - data.pos.pattern_begin);
@@ -36,7 +37,7 @@ void print_alignment(std::ostream& output, const AlignmentData & data, std::stri
 	output << std::endl;
 }
 
-void print_match(std::ostream& output, std::map<std::string*, std::vector<int>, Compare>& res, std::string& name, std::string& seq, const Database * data) {
+void print_match(std::ostream& output, std::ostream& bed, std::map<std::string*, std::vector<int>, Compare>& res, std::string& name, std::string& seq, const Database * data) {
 
 	for (std::map<std::string*, std::vector<int>, Compare>::const_iterator it = res.begin(); it != res.end(); ++it) {
 		for (std::vector<int>::const_iterator it_pos = it->second.begin(); it_pos != it->second.end(); ++it_pos) {
@@ -54,6 +55,14 @@ void print_match(std::ostream& output, std::map<std::string*, std::vector<int>, 
 			print_n_times(output, ' ', *it_pos);
 			output << *(it->first) << std::endl;
 			output << std::endl;
+
+			std::replace(database_name.begin(), database_name.end(), ' ', '_');
+
+			print_bed(bed, database_name, *it_pos, *it_pos + it->first->size());
 		}
 	}
+}
+
+void print_bed(std::ostream& output, const std::string & name, int start, int stop) {
+	output << name << "\t" << start << "\t" << stop << std::endl;
 }

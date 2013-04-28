@@ -2,6 +2,7 @@
 edit_distance_threshold		1
 aligned_length_max_diff_threshold	4
 output_file					/Users/Kos/Downloads/bio/tmp/output.txt
+output_bed					/Users/Kos/Downloads/bio/tmp/bed.txt
 
 ; = HAMMER =
 ; input options: working dir, input files, offset, and possibly kmers

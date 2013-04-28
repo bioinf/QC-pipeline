@@ -17,8 +17,8 @@ int get_alignment_diff(const AlignmentData & data) {
 	return abs((int)data.pattern.length() - aligned_length);
 }
 
-void exactMatch(std::ostream& output, ireadstream * input, const Database * data) {
-	std::clog << "Create Aho-Corasick pattern automata ... ";
+void exactMatch(std::ostream& output, std::ostream& bed, ireadstream * input, const Database * data) {
+	INFO("Create Aho-Corasick pattern automata ... ");
 
 	std::map<std::string *, std::string *>::const_iterator it = data->get_data_iterator();
 	AhoCorasick ahoCorasick;
@@ -28,7 +28,7 @@ void exactMatch(std::ostream& output, ireadstream * input, const Database * data
 	}
 	ahoCorasick.init();
 
-	std::clog << "Done." << std::endl;
+	INFO("Done");
 
 	int counter = 0;
 #pragma omp parallel firstprivate(ahoCorasick) shared(counter)
@@ -50,7 +50,7 @@ void exactMatch(std::ostream& output, ireadstream * input, const Database * data
 
 			if (res.size() > 0) {
 #pragma omp critical
-				print_match(output, res, name, sequence, data);
+				print_match(output, bed, res, name, sequence, data);
 			}
 
 #pragma omp atomic update
@@ -66,7 +66,7 @@ void exactMatch(std::ostream& output, ireadstream * input, const Database * data
 	ahoCorasick.cleanup();
 }
 
-void alignment(std::ostream& output, ireadstream * input, const Database * data) {
+void alignment(std::ostream& output, std::ostream& bed, ireadstream * input, const Database * data) {
 	const int edit_distance_threshold = cfg::get().edit_distance_threshold;
 	const int aligned_length_max_diff_threshold = cfg::get().aligned_length_max_diff_threshold;
 	int counter = 0;
@@ -98,6 +98,7 @@ void alignment(std::ostream& output, ireadstream * input, const Database * data)
 				if (get_edit_distance(dt) < edit_distance_threshold && get_alignment_diff(dt) < aligned_length_max_diff_threshold) {
 #pragma omp critical
 					print_alignment(output, dt, name, database_name, database_comment);
+					print_bed(bed, name, dt.pos.text_begin, dt.pos.text_end);
 				}
 #pragma omp atomic update
 				++counter;
