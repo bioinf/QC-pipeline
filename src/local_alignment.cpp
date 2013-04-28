@@ -1,5 +1,5 @@
 #include <algorithm>
-#include "../include/local_alignment.h"
+#include "local_alignment.h"
 
 #define INF -100000
 // //LAFF example

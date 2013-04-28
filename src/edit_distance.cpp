@@ -1,5 +1,5 @@
 #include <string>
-#include "../include/edit_distance.h"
+#include "edit_distance.h"
 
 int get_edit_distance(const AlignmentData & data) {
 	std::string text = data.text.substr(data.pos.text_begin, data.pos.text_end - data.pos.text_begin + 1);

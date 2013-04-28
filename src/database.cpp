@@ -2,11 +2,11 @@
 #include <stdio.h>
 #include <iostream>
 #include <exception>
-#include "../include/database.h"
-#include "../include/QcException.h"
-#include "../include/utils.h"
+#include "database.h"
+#include "QcException.h"
+#include "utils.h"
 extern"C"{
-	#include "../include/kseq.h"
+	#include "kseq.h"
 }
 
 KSEQ_INIT(gzFile, gzread)

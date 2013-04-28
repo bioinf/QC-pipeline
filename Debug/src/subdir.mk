@@ -11,6 +11,7 @@ CPP_SRCS += \
 ../src/local_alignment.cpp \
 ../src/main.cpp \
 ../src/output.cpp \
+../src/running_modes.cpp \
 ../src/utils.cpp 
 
 OBJS += \
@@ -21,6 +22,7 @@ OBJS += \
 ./src/local_alignment.o \
 ./src/main.o \
 ./src/output.o \
+./src/running_modes.o \
 ./src/utils.o 
 
 CPP_DEPS += \
@@ -31,6 +33,7 @@ CPP_DEPS += \
 ./src/local_alignment.d \
 ./src/main.d \
 ./src/output.d \
+./src/running_modes.d \
 ./src/utils.d 
 
 

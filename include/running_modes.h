@@ -1,0 +1,11 @@
+#ifndef RUNNING_MODES_H_
+#define RUNNING_MODES_H_
+
+#include <ostream>
+#include "database.h"
+#include "io/ireadstream.hpp"
+
+void exactMatch(std::ostream& output, ireadstream * input, const Database * data);
+void alignment(std::ostream& output, ireadstream * input, const Database * data);
+
+#endif /* RUNNING_MODES_H_ */

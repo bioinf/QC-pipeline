@@ -18,11 +18,14 @@
 #include "config_common.hpp"
 #include "boost/optional.hpp"
 
-#define CONFIG_FILENAME "/Users/Kos/Dropbox/Bioinf/QC-pipeline/src/SPAdes/config.inp"
+#define CONFIG_FILENAME "config.inp"
 
 // struct for debruijn project's configuration file
 struct hammer_config
 {
+	int edit_distance_threshold;
+	int aligned_length_max_diff_threshold;
+	string output_file;
   string input_paired_1;
   string input_paired_2;
   string input_single;

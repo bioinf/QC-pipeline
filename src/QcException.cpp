@@ -1,4 +1,4 @@
-#include "../include/QcException.h"
+#include "QcException.h"
 
 QcException::QcException(const std::string m) {
 	this->message = m;

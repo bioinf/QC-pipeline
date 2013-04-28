@@ -7,8 +7,6 @@
 #ifndef HAMMER_VALIDKMERGENERATOR_HPP_
 #define HAMMER_VALIDKMERGENERATOR_HPP_
 
-#include "globals.hpp"
-
 #include "io/read.hpp"
 #include "sequence/seq.hpp"
 
@@ -81,6 +79,10 @@ class ValidKMerGenerator {
     has_more_ = true;
     first = true;
 
+	for (unsigned qual = 0; qual < sizeof(quality_probs) / sizeof(quality_probs[0]); ++qual) {
+	  quality_probs[qual] = 1 - (qual < 3 ? 0.75 : pow(10.0, -(int)qual / 10.0));
+	}
+
     TrimBadQuality();
     Next();
   }
@@ -116,9 +118,10 @@ class ValidKMerGenerator {
    */
   void Next();
  private:
+  double quality_probs[256] = { 0 };
   void TrimBadQuality();
   double Prob(uint8_t qual) {
-    return Globals::quality_probs[qual];
+    return quality_probs[qual];
   }
   uint32_t GetQual(uint32_t pos) {
     if (pos >= len_) {

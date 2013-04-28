@@ -1,3 +1,8 @@
+; = QC-pipeline variables = 
+edit_distance_threshold		1
+aligned_length_max_diff_threshold	4
+output_file					/Users/Kos/Downloads/bio/tmp/output.txt
+
 ; = HAMMER =
 ; input options: working dir, input files, offset, and possibly kmers
 input_working_dir			/Users/Kos/Downloads/bio/tmp

@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "../include/utils.h"
+#include "utils.h"
 
 std::string reverseComplement(const std::string& read) {
 	std::map<char, char> reverse;
