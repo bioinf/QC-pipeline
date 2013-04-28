@@ -48,21 +48,27 @@ KMerData * initSpades() {
 }
 
 void testKmer() {
-	KMerData * kmer_data = initSpades();
-	KMerDataCounter counter(cfg::get().count_numfiles);
-	counter.FillKMerData(*kmer_data);
-	std::cout << "total kmers: " << kmer_data->size() << std::endl;
+	try {
+		KMerData * kmer_data = initSpades();
+		KMerDataCounter counter(cfg::get().count_numfiles);
+		counter.FillKMerData(*kmer_data);
+		std::cout << "total kmers: " << kmer_data->size() << std::endl;
 
-	std::ofstream output("/tmp/kmers");
-	kmer_data->binary_write(output);
-	output.close();
-	std::cout << "Saved" << std::endl;
-	delete kmer_data;
+		std::ofstream output("/Users/Kos/Downloads/bio/kmers.txt");
+		kmer_data->binary_write(output);
+		output.close();
+		std::cout << "Saved" << std::endl;
+		delete kmer_data;
+	} catch (std::exception& e) {
+		ERROR(e.what());
+	}
 }
 
 int main(int argc, char *argv[]) {
 
 	create_console_logger();
+    INFO("Loading config from " << CONFIG_FILENAME);
+    cfg::create_instance(CONFIG_FILENAME);
 
 #ifdef TEST
 	testKmer();
@@ -74,8 +80,6 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-    INFO("Loading config from " << CONFIG_FILENAME);
-    cfg::create_instance(CONFIG_FILENAME);
 
 	const std::string mode(argv[1]);
 	const std::string dt(argv[3]);
@@ -88,7 +92,7 @@ int main(int argc, char *argv[]) {
 	try {
 		INFO("Reading UniVec db at " << db <<  " ... ");
 		data = new Database(db);
-		INFO("Done.");
+		INFO("Done");
 		INFO("Init file with reads-to-clean at " << dt << " ... ");
 		input = new ireadstream(dt);
 		INFO("Done");

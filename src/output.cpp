@@ -58,7 +58,7 @@ void print_match(std::ostream& output, std::ostream& bed, std::map<std::string*,
 
 			std::replace(database_name.begin(), database_name.end(), ' ', '_');
 
-			print_bed(bed, database_name, *it_pos, *it_pos + it->first->size());
+			print_bed(bed, name, *it_pos, *it_pos + it->first->size());
 		}
 	}
 }

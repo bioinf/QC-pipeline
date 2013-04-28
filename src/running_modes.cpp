@@ -5,6 +5,7 @@
 #include "edit_distance.h"
 #include "output.h"
 #include "config_struct_hammer.hpp"
+#include "io/read_processor.hpp"
 
 int get_alignment_diff(const AlignmentData & data) {
 	int aligned_length = 0;
@@ -16,6 +17,47 @@ int get_alignment_diff(const AlignmentData & data) {
 
 	return abs((int)data.pattern.length() - aligned_length);
 }
+
+class JobWrapper {
+public:
+	JobWrapper(const Database * data, std::ostream& output, std::ostream& bed):data(data), output(output), bed(bed){};
+
+	bool operator()(const Read &r) {
+		try {
+			std::string name = r.getName();
+			std::string sequence = r.getSequence().str();
+
+			std::map<std::string *, std::string *>::const_iterator it = data->get_data_iterator();
+			for (int i = 0; i < data->get_size(); ++i) {
+				LocalAlignment la;
+				AligmentPositions pos;
+				std::string aligned_text, aligned_pattern, database_comment;
+
+				AlignmentData dt(sequence, *(it->second), aligned_text, aligned_pattern, pos);
+				la.align(dt);
+
+				std::string& database_name = *(it->first);
+				data->get_comment_by_name(database_name, database_comment);
+				if (get_edit_distance(dt) < edit_distance_threshold && get_alignment_diff(dt) < aligned_length_max_diff_threshold) {
+#pragma omp critical
+					print_alignment(output, dt, name, database_name, database_comment);
+					print_bed(bed, name, dt.pos.text_begin, dt.pos.text_end);
+				}
+				it++;
+			}
+		} catch (std::exception& e) {
+			ERROR(e.what());
+			return false;
+		}
+		return true;
+	}
+private:
+	const Database * data;
+	std::ostream& output;
+	std::ostream& bed;
+	const int edit_distance_threshold = cfg::get().edit_distance_threshold;
+	const int aligned_length_max_diff_threshold = cfg::get().aligned_length_max_diff_threshold;
+};
 
 void exactMatch(std::ostream& output, std::ostream& bed, ireadstream * input, const Database * data) {
 	INFO("Create Aho-Corasick pattern automata ... ");
@@ -66,50 +108,11 @@ void exactMatch(std::ostream& output, std::ostream& bed, ireadstream * input, co
 	ahoCorasick.cleanup();
 }
 
+
 void alignment(std::ostream& output, std::ostream& bed, ireadstream * input, const Database * data) {
-	const int edit_distance_threshold = cfg::get().edit_distance_threshold;
-	const int aligned_length_max_diff_threshold = cfg::get().aligned_length_max_diff_threshold;
-	int counter = 0;
-
-#pragma omp parallel shared(counter)
-	while (!input->eof()) {
-		try {
-			Read r;
-#pragma omp critical
-			{
-				if (!input->eof()) {
-					*input >> r;
-				}
-			}
-			std::string name = r.getName();
-			std::string sequence = r.getSequence().str();
-
-			std::map<std::string *, std::string *>::const_iterator it = data->get_data_iterator();
-			for (int i = 0; i < data->get_size(); ++i) {
-				LocalAlignment la;
-				AligmentPositions pos;
-				std::string aligned_text, aligned_pattern, database_comment;
-
-				AlignmentData dt(sequence, *(it->second), aligned_text, aligned_pattern, pos);
-				la.align(dt);
-
-				std::string& database_name = *(it->first);
-				data->get_comment_by_name(database_name, database_comment);
-				if (get_edit_distance(dt) < edit_distance_threshold && get_alignment_diff(dt) < aligned_length_max_diff_threshold) {
-#pragma omp critical
-					print_alignment(output, dt, name, database_name, database_comment);
-					print_bed(bed, name, dt.pos.text_begin, dt.pos.text_end);
-				}
-#pragma omp atomic update
-				++counter;
-				if (!(counter % 10)) {
-					std::clog << counter << " reads processed\r";
-				}
-				it++;
-			}
-		} catch (std::exception& e) {
-//			std::clog << std::endl << e.what() << std::endl;
-		}
-	}
+	JobWrapper filler(data, output, bed);
+	hammer::ReadProcessor rp(omp_get_max_threads());
+	rp.Run(*input, filler);
+	VERIFY_MSG(rp.read() == rp.processed(), "Queue unbalanced");
 }
 
