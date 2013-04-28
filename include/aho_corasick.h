@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "../include/comparator.h"
+#include "comparator.h"
 
 class Node {
 public:
@@ -22,6 +22,7 @@ public:
 
 class AhoCorasick {
 public:
+	void cleanup();
 	void addString(const std::string * str);
 	void init();
 	void search(const std::string& str);
@@ -31,7 +32,7 @@ private:
 	void isFound(const Node * current_state, int pos);
 	Node root;
 	std::vector<std::string *> patterns;
-	std::map<std::string*, std::vector<int>, Compare> seq2index_match;
+	std::map<std::string *, std::vector<int>, Compare> seq2index_match;
 	void insert_match(std::string * seq, int pos);
 };
 

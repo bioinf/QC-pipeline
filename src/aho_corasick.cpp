@@ -4,12 +4,11 @@
 #include <string>
 #include <queue>
 
-#include "../include/aho_corasick.h"
+#include "aho_corasick.h"
 
 using namespace std;
 
 typedef map<const char, Node *>::const_iterator map_iter_t;
-
 
 Node* Node::getLink(char c) const {
 	map_iter_t iter = links.find(c);
@@ -32,6 +31,19 @@ void AhoCorasick::addString(const string * str) {
 	}
 	current_node->word_index = patterns.size();
 	patterns.push_back(const_cast<std::string *>(str));
+}
+
+void AhoCorasick::cleanup() {
+	std::queue<Node *> toDel;
+	toDel.push(&root);
+	while (!toDel.empty()) {
+		Node * current = toDel.front();
+		toDel.pop();
+		std::map<char, Node *> links = current->links;
+		for (map_iter_t it = links.begin(); it != links.end(); ++it) {
+			toDel.push(it->second);
+		}
+	}
 }
 
 //create fail (longest suffix) links in BFS manner

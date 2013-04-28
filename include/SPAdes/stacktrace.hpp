@@ -14,9 +14,11 @@
 #pragma once
 #include <execinfo.h>
 
-inline void print_stacktrace()
+inline std::string print_stacktrace()
 {
-    std::cout << "=== Stack Trace ===" << std::endl;
+	std::stringstream ss;																						\
+
+    ss << "=== Stack Trace ===" << std::endl;
 
     const size_t max_stack_size = 1000;
 
@@ -27,8 +29,10 @@ inline void print_stacktrace()
 
     // Print the stack trace
     for (int i = 0; i < count; ++i)
-        std::cerr << func_names[i] << std::endl;
+        ss << func_names[i] << std::endl;
 
     // Free the string pointers
     free(func_names);
+
+    return ss.str();
 }

@@ -16,7 +16,7 @@
 
 #define EDIT_DISTANCE_THRESHOLD 1
 #define ALIGNED_LENGTH_MAX_DIFF_THRESHOLD 4
-#define TEST
+//#define TEST
 
 std::vector<std::string> Globals::input_filenames = std::vector<std::string>();
 std::vector<std::string> Globals::input_filename_bases = std::vector<std::string>();
@@ -149,46 +149,67 @@ void exactMatch(ireadstream * input, const Database * data) {
 	std::clog << "Create Aho-Corasick pattern automata ... ";
 
 	std::map<std::string *, std::string *>::const_iterator it = data->get_data_iterator();
-	AhoCorasick a;
+	AhoCorasick ahoCorasick;
 	for (int i = 0; i < data->get_size(); ++i) {
-		a.addString(it->second);
+		ahoCorasick.addString(it->second);
 		it++;
 	}
-	a.init();
+	ahoCorasick.init();
 
 	std::clog << "Done." << std::endl;
 
-	std::string name, sequence;
 	int counter = 0;
-	try {
-		Read r;
-		while (!input->eof()) {
-			*input >> r;
-			name = r.getName();
-			sequence = r.getSequence().str();
-			a.search(sequence);
-			std::map<std::string*, std::vector<int>, Compare> res = a.getMatch();
-			if (res.size() > 0) {
-				print_match(res, name, sequence, data);
+#pragma omp parallel firstprivate(ahoCorasick) shared(counter)
+	while (!input->eof()) {
+		try {
+			Read r;
+
+#pragma omp critical
+			{
+				if (!input->eof()) {
+					*input >> r;
+				}
 			}
-			if (!(++counter % 10)) {
+
+			std::string name = r.getName();
+			std::string sequence = r.getSequence().str();
+			ahoCorasick.search(sequence);
+			std::map<std::string*, std::vector<int>, Compare> res = ahoCorasick.getMatch();
+
+			if (res.size() > 0) {
+#pragma omp critical
+				{
+					print_match(res, name, sequence, data);
+				}
+			}
+
+#pragma omp atomic update
+			++counter;
+			if (!(counter % 10)) {
 				std::clog << counter << " reads processed\r";
 			}
+		} catch (std::exception& e) {
+//			std::clog << std::endl << e.what() << std::endl;
 		}
-	} catch (std::exception& e) {
-		std::clog << std::endl << e.what() << std::endl;
 	}
+
+	ahoCorasick.cleanup();
 }
 
 void alignment(ireadstream * input, const Database * data) {
-	std::string name, sequence;
 	int counter = 0;
-	try {
-		Read r;
-		while (!input->eof()) {
-			*input >> r;
-			name = r.getName();
-			sequence = r.getSequence().str();
+#pragma omp parallel shared(counter)
+	while (!input->eof()) {
+		try {
+			Read r;
+#pragma omp critical
+			{
+				if (!input->eof()) {
+					*input >> r;
+				}
+			}
+			std::string name = r.getName();
+			std::string sequence = r.getSequence().str();
 
 			std::map<std::string *, std::string *>::const_iterator it = data->get_data_iterator();
 			for (int i = 0; i < data->get_size(); ++i) {
@@ -202,16 +223,21 @@ void alignment(ireadstream * input, const Database * data) {
 				std::string& database_name = *(it->first);
 				data->get_comment_by_name(database_name, database_comment);
 				if (get_edit_distance(dt) < EDIT_DISTANCE_THRESHOLD && get_alignment_diff(dt) < ALIGNED_LENGTH_MAX_DIFF_THRESHOLD) {
-					print_alignment(dt, name, database_name, database_comment);
+#pragma omp critical
+					{
+						print_alignment(dt, name, database_name, database_comment);
+					}
 				}
-				if (!(++counter % 10)) {
+#pragma omp atomic update
+				++counter;
+				if (!(counter % 10)) {
 					std::clog << counter << " reads processed\r";
 				}
 				it++;
 			}
+		} catch (std::exception& e) {
+//			std::clog << std::endl << e.what() << std::endl;
 		}
-	} catch (std::exception& e) {
-		std::clog << std::endl << e.what() << std::endl;
 	}
 }
 
@@ -219,7 +245,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef TEST
 //	test();
-	testKmer();
+//	testKmer();
 	return 0;
 #endif
 
@@ -263,7 +289,7 @@ int main(int argc, char *argv[]) {
 	} else {
 		alignment(input, data);
 	}
-	std::clog << "Done." << std::endl;
+	std::clog << std::endl << "Done." << std::endl;
 
 	delete data; //NB Don't delete earlier than AhoCorasick, because otherwise all patterns will be deleted
 	delete input;
