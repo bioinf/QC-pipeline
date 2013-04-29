@@ -7,26 +7,15 @@
 #include "config_struct_hammer.hpp"
 #include "io/read_processor.hpp"
 
-int get_alignment_diff(const AlignmentData & data) {
-	int aligned_length = 0;
-	for (int i = 0; i < (int)data.aligned_pattern.length(); ++i) {
-		if ('-' != data.aligned_pattern[i]) {
-			aligned_length++;
-		}
-	}
-
-	return abs((int)data.pattern.length() - aligned_length);
-}
-
-class JobWrapper {
+class AlignmentJobWrapper {
 public:
-	JobWrapper(const Database * data, std::ostream& output, std::ostream& bed):data(data), output(output), bed(bed){};
+	AlignmentJobWrapper(const Database * data, std::ostream& output, std::ostream& bed)
+		:data(data), output(output), bed(bed){};
 
 	bool operator()(const Read &r) {
 		try {
 			std::string name = r.getName();
-			std::string sequence = r.getSequence().str();
-
+			std::string sequence = r.getSequenceString();
 			std::map<std::string *, std::string *>::const_iterator it = data->get_data_iterator();
 			for (int i = 0; i < data->get_size(); ++i) {
 				LocalAlignment la;
@@ -47,9 +36,20 @@ public:
 			}
 		} catch (std::exception& e) {
 			ERROR(e.what());
-			return false;
+			return true;
 		}
-		return true;
+		return false;
+	}
+
+	int get_alignment_diff(const AlignmentData & data) {
+		int aligned_length = 0;
+		for (int i = 0; i < (int)data.aligned_pattern.length(); ++i) {
+			if ('-' != data.aligned_pattern[i]) {
+				aligned_length++;
+			}
+		}
+
+		return abs((int)data.pattern.length() - aligned_length);
 	}
 private:
 	const Database * data;
@@ -57,6 +57,36 @@ private:
 	std::ostream& bed;
 	const int edit_distance_threshold = cfg::get().edit_distance_threshold;
 	const int aligned_length_max_diff_threshold = cfg::get().aligned_length_max_diff_threshold;
+};
+
+class ExactMatchJobWrapper {
+public:
+	ExactMatchJobWrapper(const Database * data, std::ostream& output, std::ostream& bed, const AhoCorasick &a)
+		:data(data), output(output), bed(bed), ahoCorasick(a){};
+
+	bool operator()(const Read &r) {
+		try{
+			std::string name = r.getName();
+			std::string sequence = r.getSequenceString();
+			ahoCorasick.search(sequence);
+			std::map<std::string*, std::vector<int>, Compare> res = ahoCorasick.getMatch();
+
+			if (res.size() > 0) {
+#pragma omp critical
+				print_match(output, bed, res, name, sequence, data);
+			}
+		} catch (std::exception& e) {
+			ERROR(e.what());
+			return true;
+		}
+		return false;
+	}
+
+private:
+	const Database * data;
+	std::ostream& output;
+	std::ostream& bed;
+	AhoCorasick ahoCorasick;
 };
 
 void exactMatch(std::ostream& output, std::ostream& bed, ireadstream * input, const Database * data) {
@@ -72,47 +102,20 @@ void exactMatch(std::ostream& output, std::ostream& bed, ireadstream * input, co
 
 	INFO("Done");
 
-	int counter = 0;
-#pragma omp parallel firstprivate(ahoCorasick) shared(counter)
-	while (!input->eof()) {
-		try {
-			Read r;
-
-#pragma omp critical
-			{
-				if (!input->eof()) {
-					*input >> r;
-				}
-			}
-
-			std::string name = r.getName();
-			std::string sequence = r.getSequence().str();
-			ahoCorasick.search(sequence);
-			std::map<std::string*, std::vector<int>, Compare> res = ahoCorasick.getMatch();
-
-			if (res.size() > 0) {
-#pragma omp critical
-				print_match(output, bed, res, name, sequence, data);
-			}
-
-#pragma omp atomic update
-			++counter;
-			if (!(counter % 10)) {
-				std::clog << counter << " reads processed\r";
-			}
-		} catch (std::exception& e) {
-//			std::clog << std::endl << e.what() << std::endl;
-		}
-	}
+	ExactMatchJobWrapper filler(data, output, bed, ahoCorasick);
+	hammer::ReadProcessor rp(omp_get_max_threads());
+	rp.Run(*input, filler);
+	std::cout << "Read: " << rp.read() << std::endl;
+	VERIFY_MSG(rp.read() == rp.processed(), "Queue unbalanced");
 
 	ahoCorasick.cleanup();
 }
 
 
 void alignment(std::ostream& output, std::ostream& bed, ireadstream * input, const Database * data) {
-	JobWrapper filler(data, output, bed);
+	AlignmentJobWrapper filler(data, output, bed);
 	hammer::ReadProcessor rp(omp_get_max_threads());
 	rp.Run(*input, filler);
+	std::cout << "Read: " << rp.read() << std::endl;
 	VERIFY_MSG(rp.read() == rp.processed(), "Queue unbalanced");
 }
-

@@ -66,6 +66,7 @@ void testKmer() {
 
 int main(int argc, char *argv[]) {
 
+	clock_t start = clock();
 	create_console_logger();
     INFO("Loading config from " << CONFIG_FILENAME);
     cfg::create_instance(CONFIG_FILENAME);
@@ -80,12 +81,9 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-
 	const std::string mode(argv[1]);
 	const std::string dt(argv[3]);
 	std::string db(argv[2]);
-
-	clock_t start = clock();
 
 	Database * data;
 	ireadstream * input;
