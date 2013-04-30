@@ -1,11 +1,10 @@
 #include "running_modes.h"
 #include "QcException.h"
-#include "local_alignment.h"
 #include "aho_corasick.h"
-#include "edit_distance.h"
 #include "output.h"
 #include "config_struct_hammer.hpp"
 #include "io/read_processor.hpp"
+#include "ssw_cpp.h"
 
 class AlignmentJobWrapper {
 public:
@@ -15,22 +14,27 @@ public:
 	bool operator()(const Read &r) {
 		try {
 			std::string name = r.getName();
-			std::string sequence = r.getSequenceString();
+			std::string ref = r.getSequenceString();
 			std::map<std::string *, std::string *>::const_iterator it = data->get_data_iterator();
 			for (int i = 0; i < data->get_size(); ++i) {
-				LocalAlignment la;
-				AligmentPositions pos;
-				std::string aligned_text, aligned_pattern, database_comment;
+				// Declares a default Aligner
+				StripedSmithWaterman::Aligner aligner;
+				// Declares a default filter
+				StripedSmithWaterman::Filter filter;
+				// Declares an alignment that stores the result
+				StripedSmithWaterman::Alignment alignment;
+				std::string& query = *(it->second);
+				// Aligns the query to the ref
+				aligner.Align(query.c_str(), ref.c_str(), ref.size(), filter, &alignment);
 
-				AlignmentData dt(sequence, *(it->second), aligned_text, aligned_pattern, pos);
-				la.align(dt);
-
+				std::string database_comment;
 				std::string& database_name = *(it->first);
 				data->get_comment_by_name(database_name, database_comment);
-				if (get_edit_distance(dt) < edit_distance_threshold && get_alignment_diff(dt) < aligned_length_max_diff_threshold) {
+
+				if (alignment.mismatches < mismatch_threshold && is_alignment_good(alignment, query)) {
 #pragma omp critical
-					print_alignment(output, dt, name, database_name, database_comment);
-					print_bed(bed, name, dt.pos.text_begin, dt.pos.text_end);
+					print_alignment(output, alignment, ref, query, name, database_name, database_comment);
+					print_bed(bed, name, alignment.ref_begin, alignment.ref_end);
 				}
 				it++;
 			}
@@ -41,22 +45,16 @@ public:
 		return false;
 	}
 
-	int get_alignment_diff(const AlignmentData & data) {
-		int aligned_length = 0;
-		for (int i = 0; i < (int)data.aligned_pattern.length(); ++i) {
-			if ('-' != data.aligned_pattern[i]) {
-				aligned_length++;
-			}
-		}
-
-		return abs((int)data.pattern.length() - aligned_length);
-	}
 private:
+	double is_alignment_good(const StripedSmithWaterman::Alignment& a, const std::string& query) {
+		return (min(a.query_end, a.ref_end) - max(a.query_begin, a.ref_begin)) / (double) query.size() > aligned_part_fraction;
+	}
+
 	const Database * data;
 	std::ostream& output;
 	std::ostream& bed;
-	const int edit_distance_threshold = cfg::get().edit_distance_threshold;
-	const int aligned_length_max_diff_threshold = cfg::get().aligned_length_max_diff_threshold;
+	const int mismatch_threshold = cfg::get().mismatch_threshold;
+	const double aligned_part_fraction = cfg::get().aligned_part_fraction;
 };
 
 class ExactMatchJobWrapper {

@@ -9,6 +9,7 @@
 #include "memory_limit.hpp"
 #include "QcException.h"
 #include "running_modes.h"
+#include "ssw_cpp.h"
 
 //#define TEST
 
@@ -64,6 +65,37 @@ void testKmer() {
 	}
 }
 
+void restoreFromCigar(const std::string& ref, const std::string& query, std::string& out_ref, std::string& out_query, const StripedSmithWaterman::Alignment& a);
+void testSSW() {
+	  const string ref   = "GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT";
+	  const string query = "GCTCTTCCGATCGTGACTGGAGTTCAGACGTGT";
+
+	  // Declares a default Aligner
+	  StripedSmithWaterman::Aligner aligner;
+	  // Declares a default filter
+	  StripedSmithWaterman::Filter filter;
+	  // Declares an alignment that stores the result
+	  StripedSmithWaterman::Alignment alignment;
+	  // Aligns the query to the ref
+	  aligner.Align(query.c_str(), ref.c_str(), ref.size(), filter, &alignment);
+	  cout << "===== SSW result =====" << endl;
+	    cout << "Best Smith-Waterman score:\t" << alignment.sw_score << endl
+	         << "Next-best Smith-Waterman score:\t" << alignment.sw_score_next_best << endl
+	         << "Reference start:\t" << alignment.ref_begin << endl
+	         << "Reference end:\t" << alignment.ref_end << endl
+	         << "Query start:\t" << alignment.query_begin << endl
+	         << "Query end:\t" << alignment.query_end << endl
+	         << "Next-best reference end:\t" << alignment.ref_end_next_best << endl
+	         << "Number of mismatches:\t" << alignment.mismatches << endl
+	         << "Cigar: " << alignment.cigar_string << endl;
+	    cout << "======================" << endl;
+
+	    std::cout << ref << std::endl << query << std::endl << std::endl;
+	    std::string out_ref, out_query;
+	    restoreFromCigar(ref, query, out_ref, out_query, alignment);
+	    std::cout << out_ref << std::endl << out_query << std::endl;
+}
+
 int main(int argc, char *argv[]) {
 
 	clock_t start = clock();
@@ -72,7 +104,8 @@ int main(int argc, char *argv[]) {
     cfg::create_instance(CONFIG_FILENAME);
 
 #ifdef TEST
-	testKmer();
+//	testKmer();
+	testSSW();
 	return 0;
 #endif
 

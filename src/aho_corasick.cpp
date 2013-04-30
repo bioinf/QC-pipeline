@@ -43,6 +43,7 @@ void AhoCorasick::cleanup() {
 		for (map_iter_t it = links.begin(); it != links.end(); ++it) {
 			toDel.push(it->second);
 		}
+		delete current;
 	}
 }
 

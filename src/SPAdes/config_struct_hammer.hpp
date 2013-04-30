@@ -23,8 +23,8 @@
 // struct for debruijn project's configuration file
 struct hammer_config
 {
-	int edit_distance_threshold;
-	int aligned_length_max_diff_threshold;
+	int mismatch_threshold;
+	double aligned_part_fraction;
 	string output_file;
 	string output_bed;
   string input_paired_1;

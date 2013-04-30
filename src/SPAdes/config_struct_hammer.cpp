@@ -18,8 +18,8 @@ void load(hammer_config& cfg, boost::property_tree::ptree const& pt)
 {
   using config_common::load;
   //QC-pipeline staff
-  load(cfg.aligned_length_max_diff_threshold, pt, "aligned_length_max_diff_threshold");
-  load(cfg.edit_distance_threshold, pt, "edit_distance_threshold");
+  load(cfg.mismatch_threshold, pt, "mismatch_threshold");
+  load(cfg.aligned_part_fraction, pt, "aligned_part_fraction");
   load(cfg.output_file, pt, "output_file");
   load(cfg.output_bed, pt, "output_bed");
 
