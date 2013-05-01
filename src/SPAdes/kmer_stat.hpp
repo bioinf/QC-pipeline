@@ -24,7 +24,7 @@
 
 
 namespace hammer {
-const uint32_t K = 9;
+const uint32_t K = 11;
 const uint32_t M = 55;
 typedef Seq<K> KMer;
 };

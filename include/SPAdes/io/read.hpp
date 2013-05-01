@@ -68,6 +68,10 @@ public:
     return name_;
   }
 
+  const std::string& getCommentString() const {
+	  return comment_;
+   }
+
   size_t size() const {
     return seq_.size();
   }
@@ -172,6 +176,7 @@ public:
   
 private:
   std::string name_;
+  std::string comment_;
   std::string seq_;
   std::string qual_;
   bool valid_;
@@ -183,6 +188,9 @@ private:
   void setName(const char* s) {
     name_ = s;
   }
+  void setComment(const char* s) {
+	  comment_ = s;
+   }
   const bool updateValid() const {
     if (seq_.size() == 0) {
       return false;

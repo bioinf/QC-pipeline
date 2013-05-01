@@ -1,6 +1,6 @@
 ; = QC-pipeline variables = 
-mismatch_threshold		1
-aligned_part_fraction	0.1
+mismatch_threshold		4
+aligned_part_fraction	0.8
 output_file					/Users/Kos/Downloads/bio/tmp/output.txt
 output_bed					/Users/Kos/Downloads/bio/tmp/bed.txt
 
@@ -10,7 +10,7 @@ input_working_dir			/Users/Kos/Downloads/bio/tmp
 input_paired				0
 input_paired_1				
 input_paired_2				
-input_single				/Users/Kos/Dropbox/Bioinf/QC-pipeline/Database/UniVec_adaptor_only.gz
+input_single				/Users/Kos/Dropbox/Bioinf/QC-pipeline/Database/UniVec_Core.gz
 input_trim_quality			2
 input_gzipped				1
 input_qvoffset				64

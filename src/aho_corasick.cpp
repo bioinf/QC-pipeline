@@ -20,11 +20,11 @@ bool Node::isTerminal() const {
 }
 
 void AhoCorasick::addString(const string * str) {
-	Node *current_node = &root;
+	Node *current_node = root;
 	for (int i = 0; i < (int) str->length(); ++i) {
 		Node *child_node = current_node->getLink((*str)[i]);
 		if (!child_node) {
-			child_node = new Node(&root);
+			child_node = new Node(root);
 			current_node->links[(*str)[i]] = child_node;
 		}
 		current_node = child_node;
@@ -35,7 +35,7 @@ void AhoCorasick::addString(const string * str) {
 
 void AhoCorasick::cleanup() {
 	std::queue<Node *> toDel;
-	toDel.push(&root);
+	toDel.push(root);
 	while (!toDel.empty()) {
 		Node * current = toDel.front();
 		toDel.pop();
@@ -51,7 +51,7 @@ void AhoCorasick::cleanup() {
 //and init output sets/links for each node
 void AhoCorasick::init() {
 	queue<Node *> q;
-	q.push(&root);
+	q.push(root);
 	while (!q.empty()) {
 		Node *current_node = q.front();
 		q.pop();
@@ -96,7 +96,7 @@ const Node * AhoCorasick::go(const Node * current_state, char c) {
 		}
 		current_state = current_state->fail;
 	}
-	return &root; //(2)
+	return root; //(2)
 }
 
 void AhoCorasick::insert_match(std::string * seq, int pos) {
@@ -131,7 +131,7 @@ void AhoCorasick::isFound(const Node * current_state, int pos) {
 
 void AhoCorasick::search(const std::string& str) {
 	seq2index_match.clear();
-	const Node * current_state = &root;
+	const Node * current_state = root;
 	std::vector<int> res;
 	for (int i = 0; i < (int) str.length(); ++i) {
 		current_state = go(current_state, str[i]);

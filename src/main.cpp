@@ -15,7 +15,7 @@
 
 void usage() {
 	std::cout << "This tool searches contaminations from UniVec db in provided file with reads" << std::endl;
-	std::cout << "Usage: QC-pileline mode:{exact, align} UniVec_path Fasta/Fastq.gz" << std::endl;
+	std::cout << "Usage: QC-pileline mode:{exact, align, both} UniVec_path Fasta/Fastq.gz" << std::endl;
 	std::cout << "Currently only .gz files can be read" << std::endl;
 }
 
@@ -55,13 +55,13 @@ void testKmer() {
 		counter.FillKMerData(*kmer_data);
 		std::cout << "total kmers: " << kmer_data->size() << std::endl;
 
-		std::ofstream output("/Users/Kos/Downloads/bio/kmers.txt");
+		std::ofstream output("/Users/Kos/Downloads/bio/tmp/kmers.txt");
 		kmer_data->binary_write(output);
 		output.close();
 		std::cout << "Saved" << std::endl;
 		delete kmer_data;
 	} catch (std::exception& e) {
-		ERROR(e.what());
+		ERROR("Caught: "<< e.what());
 	}
 }
 
@@ -104,12 +104,12 @@ int main(int argc, char *argv[]) {
     cfg::create_instance(CONFIG_FILENAME);
 
 #ifdef TEST
-//	testKmer();
-	testSSW();
+	testKmer();
+//	testSSW();
 	return 0;
 #endif
 
-	if(4 != argc || (strcmp(argv[1], "exact") && strcmp(argv[1], "align"))) {
+	if(4 != argc || (strcmp(argv[1], "exact") && strcmp(argv[1], "align") && strcmp(argv[1], "both"))) {
 		usage();
 		return 0;
 	}
@@ -142,8 +142,10 @@ int main(int argc, char *argv[]) {
 
 	if (!strcmp(argv[1], "exact")) {
 		exactMatch(output, bed, input, data);
-	} else {
+	} else if (!strcmp(argv[1], "align")) {
 		alignment(output, bed, input, data);
+	} else if (!strcmp(argv[1], "both")) {
+		exactAndAlign(output, bed, input, data);
 	}
 	output.close();
 	bed.close();
@@ -152,7 +154,7 @@ int main(int argc, char *argv[]) {
 	delete input;
 
 	clock_t ends = clock();
-	INFO("Running Time: " << (double) (ends - start) / CLOCKS_PER_SEC << " seconds.");
+	INFO("Processor Time Spent: " << (double) (ends - start) / CLOCKS_PER_SEC << " seconds.");
 	INFO("Goodbye!");
 	return 0;
 }

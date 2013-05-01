@@ -94,6 +94,9 @@ public:
 		if (seq_->qual.s) {
 			r.setQuality(seq_->qual.s, offset_);
 		}
+		if (seq_->comment.s) {
+			r.setComment(seq_->comment.s);
+		}
 		r.setSequence(seq_->seq.s);
 		read_ahead(); // make actual read for the next result
 		return *this;

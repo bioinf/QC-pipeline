@@ -22,6 +22,7 @@ public:
 
 class AhoCorasick {
 public:
+	AhoCorasick() : root(new Node()) {};
 	void cleanup();
 	void addString(const std::string * str);
 	void init();
@@ -30,7 +31,7 @@ public:
 private:
 	const Node * go(const Node * current_state, char c);
 	void isFound(const Node * current_state, int pos);
-	Node root;
+	Node * root;
 	std::vector<std::string *> patterns;
 	std::map<std::string *, std::vector<int>, Compare> seq2index_match;
 	void insert_match(std::string * seq, int pos);

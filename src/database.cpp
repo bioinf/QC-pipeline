@@ -5,46 +5,71 @@
 #include "database.h"
 #include "QcException.h"
 #include "utils.h"
-extern"C"{
-	#include "kseq.h"
+#include "io/read_processor.hpp"
+
+void DatabaseFiller::insert2db(const hammer::KMer & seq, std::string * sequence) {
+	std::string * kmer = new std::string(seq.str());
+
+#pragma omp critical
+	{
+		std::string str = seq.str();
+		if (kmer2listOfSeq->end() == kmer2listOfSeq->find(&str)) {
+			std::vector<std::string * > source;
+			source.push_back(sequence);
+			kmer2listOfSeq->insert(std::make_pair(kmer, source));
+		} else {
+			(*kmer2listOfSeq)[kmer].push_back(sequence);
+		}
+	}
 }
 
-KSEQ_INIT(gzFile, gzread)
+bool DatabaseFiller::operator()(const Read &r) {
+	try {
+		std::string * name = new std::string(r.getName());
+		std::string * sequence = new std::string(r.getSequenceString());
+		std::string * comment = new std::string(r.getCommentString());
+		//complement strings:
+		std::string * name_c = new std::string(std::string(r.getName()) + " (complementary)");
+		std::string * sequence_c = new std::string(reverseComplement(*sequence));
+
+#pragma omp critical
+		{
+			name2seq->insert(std::make_pair(name, sequence));
+			seq2name->insert(std::make_pair(sequence, name));
+			name2comment->insert(std::make_pair(name, comment));
+			name2seq->insert(std::make_pair(name_c, sequence_c));
+			seq2name->insert(std::make_pair(sequence_c, name_c));
+			name2comment->insert(std::make_pair(name_c, comment));
+		}
+
+		ValidKMerGenerator<hammer::K> gen(r);
+		while (gen.HasMore()) {
+			hammer::KMer seq = gen.kmer();
+			insert2db(seq, sequence);
+
+			seq = !seq;
+			insert2db(seq, sequence_c);
+
+			gen.Next();
+		}
+
+	} catch (std::exception& e) {
+		ERROR(e.what() << " for " << r.getName() << " " << r.getSequenceString());
+	}
+	return false;
+}
 
 Database::Database(const std::string& filename) {
+	ireadstream * input = new ireadstream(filename);
+	DatabaseFiller filler;
+	hammer::ReadProcessor rp(omp_get_max_threads());
+	rp.Run(*input, filler);
+	delete input;
 
-	name2seq = new std::map<std::string *, std::string *, Compare>();
-	seq2name = new std::map<std::string *, std::string *, Compare>();
-	name2comment = new std::map<std::string *, std::string *, Compare>();
-
-	gzFile fp;
-	kseq_t *seq;
-	int l;
-
-	fp = gzopen(filename.c_str(), "r");
-	if(Z_NULL == fp) {
-		throw QcException("Database not found at: " + filename);
-	}
-
-	seq = kseq_init(fp);
-	while ((l = kseq_read(seq)) >= 0) {
-		std::string * name = new std::string(seq->name.s);
-		std::string * sequence = new std::string(seq->seq.s);
-		std::string * comment = new std::string(seq->comment.s);
-		name2seq->insert(std::make_pair(name, sequence));
-		seq2name->insert(std::make_pair(sequence, name));
-		name2comment->insert(std::make_pair(name, comment));
-
-		//complement strings:
-		std::string * name_c = new std::string(std::string(seq->name.s) + " (complementary)");
-		std::string * sequence_c = new std::string(reverseComplement(seq->seq.s));
-		std::string * comment_c = new std::string(std::string(seq->comment.s) + " (complementary)");
-		name2seq->insert(std::make_pair(name_c, sequence_c));
-		seq2name->insert(std::make_pair(sequence_c, name_c));
-		name2comment->insert(std::make_pair(name_c, comment_c));
-	}
-	kseq_destroy(seq);
-	gzclose(fp);
+	name2seq = filler.getName2seq();
+	seq2name = filler.getSeq2name();
+	name2comment = filler.getName2comment();
+	kmer2listOfSeq = filler.getKmer2listOfSeq();
 }
 
 Database::~Database() {
@@ -57,9 +82,14 @@ Database::~Database() {
 		delete it->second;
 	}
 
+	for (std::map<std::string *, std::vector<std::string *>, Compare>::const_iterator it = kmer2listOfSeq->begin(); it != kmer2listOfSeq->end(); ++it) {
+		delete it->first;
+	}
+
 	delete name2seq;
 	delete name2comment;
 	delete seq2name;
+	delete kmer2listOfSeq;
 }
 
 void Database::get_sequence_by_name(const std::string& name, std::string& out_seq) const {
@@ -86,12 +116,25 @@ void Database::get_name_by_sequence(const std::string& seq, std::string& out_nam
 	out_name.assign(*(it->second));
 }
 
-int Database::get_size() const {
+void Database::get_sequences_for_kmer(const std::string& kmer, std::vector<std::string *>& out_seq) const {
+	std::map<std::string *, std::vector<std::string *>, Compare>::const_iterator it = kmer2listOfSeq->find(const_cast<std::string *>(&kmer));
+	if (kmer2listOfSeq->end() != it) {
+		out_seq.assign(it->second.begin(), it->second.end());
+	}
+}
+
+int Database::get_sequences_amount() const {
 	return name2seq->size();
+}
+
+int Database::get_kmers_amount() const {
+	return kmer2listOfSeq->size();
 }
 
 std::map<std::string *, std::string *>::const_iterator Database::get_data_iterator() const {
 	return name2seq->begin();
 }
 
-
+std::map<std::string *, std::vector<std::string *>, Compare>::const_iterator Database::get_kmer_iterator() const {
+	return kmer2listOfSeq->begin();
+}
