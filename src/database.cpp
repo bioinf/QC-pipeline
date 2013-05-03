@@ -31,6 +31,7 @@ bool DatabaseFiller::operator()(const Read &r) {
 		//complement strings:
 		std::string * name_c = new std::string(std::string(r.getName()) + " (complementary)");
 		std::string * sequence_c = new std::string(reverseComplement(*sequence));
+		std::string * comment_c = new std::string(std::string(r.getCommentString()) + " (complementary)");
 
 #pragma omp critical
 		{
@@ -39,7 +40,7 @@ bool DatabaseFiller::operator()(const Read &r) {
 			name2comment->insert(std::make_pair(name, comment));
 			name2seq->insert(std::make_pair(name_c, sequence_c));
 			seq2name->insert(std::make_pair(sequence_c, name_c));
-			name2comment->insert(std::make_pair(name_c, comment));
+			name2comment->insert(std::make_pair(name_c, comment_c));
 		}
 
 		ValidKMerGenerator<hammer::K> gen(r);

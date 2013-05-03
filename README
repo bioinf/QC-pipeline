@@ -1,5 +1,7 @@
 To build run the following command:
 
+mkdir build
+mkdir bin
 cd ./build
 cmake ../src
 make

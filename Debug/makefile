@@ -50,13 +50,19 @@ QC-pipeline: $(OBJS) $(USER_OBJS)
 	g++ -L/opt/local/lib/gcc47/ -L/opt/local/lib -std=c++11 -fopenmp -o "QC-pipeline" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
+	$(MAKE) --no-print-directory post-build
 
 # Other Targets
 clean:
 	-$(RM) $(C++_DEPS)$(OBJS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) QC-pipeline
 	-@echo ' '
 
+post-build:
+	-@echo 'Copy executables to bin'
+	-cp ./QC-pipeline ../bin/ & cp ../src/config.inp ../bin/
+	-@echo ' '
+
 .PHONY: all clean dependents
-.SECONDARY:
+.SECONDARY: post-build
 
 -include ../makefile.targets
