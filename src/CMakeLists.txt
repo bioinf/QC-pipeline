@@ -33,7 +33,6 @@ add_executable(QC-pipeline
 	main.cpp
 	running_modes.cpp
 	ssw_cpp.cpp
-	fasta_reader.cpp
 	output.cpp
 	utils.cpp)
 
