@@ -119,6 +119,7 @@ public:
     }
 
 #   pragma omp flush(stop)
+	std::clog << std::endl;
     return stop;
   }
 
