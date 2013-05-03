@@ -6,7 +6,7 @@
 #include <map>
 #include <ostream>
 #include "comparator.h"
-#include "Database.h"
+#include "database.h"
 #include "ssw_cpp.h"
 
 void print_n_times(std::ostream& output, char c, int n);

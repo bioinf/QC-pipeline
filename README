@@ -1,0 +1,7 @@
+To build run the following command:
+
+cd ./build
+cmake ../src
+make
+make install
+cd ./bin

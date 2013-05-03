@@ -6,6 +6,11 @@
 
 project(mph_index CXX)
 
+include_directories(./)
+include_directories(../../../include)
+include_directories(../../../include/SPAdes)
+include_directories(../../../include/SPAdes/mph_index)
+
 add_library(mph_index STATIC
             MurmurHash3.cpp
             mph_bits.cc
