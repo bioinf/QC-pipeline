@@ -60,9 +60,9 @@ bool ExactAndAlignJobWrapper::operator()(const Read &r) {
 
 		std::set<std::string * , Compare> setOfContaminations2check;
 		for (std::map<std::string*, std::vector<int>, Compare>::const_iterator it = matchingKmers.begin(); it != matchingKmers.end(); ++it) {
-			std::vector<std::string *> listOfseqs;
-			data->get_sequences_for_kmer(*(it->first), listOfseqs);
-			setOfContaminations2check.insert(listOfseqs.begin(), listOfseqs.end());
+			std::set<std::string *, Compare> setOfSeqs;
+			data->get_sequences_for_kmer(*(it->first), setOfSeqs);
+			setOfContaminations2check.insert(setOfSeqs.begin(), setOfSeqs.end());
 		}
 
 		//try to exact match the sequences
@@ -70,11 +70,14 @@ bool ExactAndAlignJobWrapper::operator()(const Read &r) {
 		for (std::set<std::string * , Compare>::const_iterator it = setOfContaminations2check.begin(); it != setOfContaminations2check.end(); ++it) {
 			ac.addString(*it);
 		}
+		ac.init();
+		ac.search(sequence);
 
 		std::map<std::string*, std::vector<int>, Compare> matchingSequences = ac.getMatch();
 		if (!matchingSequences.empty()) {
 #pragma omp critical
 			print_match(output, bed, matchingSequences, name, sequence, data);
+			return false; //exact match is better than an alignment -> no need to align
 		}
 		ac.cleanup();
 

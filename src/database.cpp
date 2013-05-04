@@ -14,11 +14,11 @@ void DatabaseFiller::insert2db(const hammer::KMer & seq, std::string * sequence)
 	{
 		std::string str = seq.str();
 		if (kmer2listOfSeq->end() == kmer2listOfSeq->find(&str)) {
-			std::vector<std::string * > source;
-			source.push_back(sequence);
+			std::set<std::string *, Compare> source;
+			source.insert(sequence);
 			kmer2listOfSeq->insert(std::make_pair(kmer, source));
 		} else {
-			(*kmer2listOfSeq)[kmer].push_back(sequence);
+			(*kmer2listOfSeq)[kmer].insert(sequence);
 		}
 	}
 }
@@ -83,7 +83,7 @@ Database::~Database() {
 		delete it->second;
 	}
 
-	for (std::map<std::string *, std::vector<std::string *>, Compare>::const_iterator it = kmer2listOfSeq->begin(); it != kmer2listOfSeq->end(); ++it) {
+	for (std::map<std::string *, std::set<std::string *, Compare>, Compare>::const_iterator it = kmer2listOfSeq->begin(); it != kmer2listOfSeq->end(); ++it) {
 		delete it->first;
 	}
 
@@ -117,10 +117,10 @@ void Database::get_name_by_sequence(const std::string& seq, std::string& out_nam
 	out_name.assign(*(it->second));
 }
 
-void Database::get_sequences_for_kmer(const std::string& kmer, std::vector<std::string *>& out_seq) const {
-	std::map<std::string *, std::vector<std::string *>, Compare>::const_iterator it = kmer2listOfSeq->find(const_cast<std::string *>(&kmer));
+void Database::get_sequences_for_kmer(const std::string& kmer, std::set<std::string *, Compare>& out_seq) const {
+	std::map<std::string *, std::set<std::string *, Compare>, Compare>::const_iterator it = kmer2listOfSeq->find(const_cast<std::string *>(&kmer));
 	if (kmer2listOfSeq->end() != it) {
-		out_seq.assign(it->second.begin(), it->second.end());
+		out_seq.insert(it->second.begin(), it->second.end());
 	}
 }
 
@@ -136,6 +136,6 @@ std::map<std::string *, std::string *>::const_iterator Database::get_data_iterat
 	return name2seq->begin();
 }
 
-std::map<std::string *, std::vector<std::string *>, Compare>::const_iterator Database::get_kmer_iterator() const {
+std::map<std::string *, std::set<std::string *, Compare>, Compare>::const_iterator Database::get_kmer_iterator() const {
 	return kmer2listOfSeq->begin();
 }

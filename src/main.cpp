@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
     cfg::create_instance(CONFIG_FILENAME);
 
 #ifdef TEST
-	testKmer();
+//	testKmer();
 //	testSSW();
 	return 0;
 #endif

@@ -29,7 +29,7 @@ void exactMatch(std::ostream& output, std::ostream& bed, ireadstream * input, co
 void exactAndAlign(std::ostream& output, std::ostream& bed, ireadstream * input, const Database * data) {
 	INFO("Create Aho-Corasick automata for kmers... ");
 
-	std::map<std::string *, std::vector<std::string *> >::const_iterator it = data->get_kmer_iterator();
+	std::map<std::string *, std::set<std::string *, Compare> >::const_iterator it = data->get_kmer_iterator();
 	AhoCorasick ahoCorasick;
 	for (int i = 0; i < data->get_kmers_amount(); ++i) {
 		ahoCorasick.addString(it->first);
