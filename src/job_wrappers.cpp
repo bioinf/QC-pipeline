@@ -72,7 +72,7 @@ bool ExactAndAlignJobWrapper::operator()(const Read &r) {
 		}
 
 		std::map<std::string*, std::vector<int>, Compare> matchingSequences = ac.getMatch();
-		if (matchingSequences.size() > 0) {
+		if (!matchingSequences.empty()) {
 #pragma omp critical
 			print_match(output, bed, matchingSequences, name, sequence, data);
 		}

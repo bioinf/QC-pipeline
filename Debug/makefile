@@ -47,7 +47,7 @@ all: QC-pipeline
 QC-pipeline: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MacOS X C++ Linker'
-	g++ -L/opt/local/lib/gcc47/ -L/opt/local/lib -std=c++11 -fopenmp -o "QC-pipeline" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L/opt/local/lib/gcc47/ -L/opt/local/lib -std=c++11 -o "QC-pipeline" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 	$(MAKE) --no-print-directory post-build

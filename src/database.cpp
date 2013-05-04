@@ -43,7 +43,7 @@ bool DatabaseFiller::operator()(const Read &r) {
 			name2comment->insert(std::make_pair(name_c, comment_c));
 		}
 
-		ValidKMerGenerator<hammer::K> gen(r);
+		ValidKMerGenerator<hammer::K> gen(r, 0);
 		while (gen.HasMore()) {
 			hammer::KMer seq = gen.kmer();
 			insert2db(seq, sequence);
